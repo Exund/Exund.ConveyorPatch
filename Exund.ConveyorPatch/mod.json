@@ -1,0 +1,9 @@
+{
+    "Id": "Exund.ConveyorPatch",
+    "DisplayName": "Conveyor Patch",
+    "Author": "Exund",
+    "Version": "1.0.0",
+    "Enable": true,
+    "AssemblyName": "Exund.ConveyorPatch.dll",
+    "EntryMethod": "Exund.ConveyorPatch.ConveyorPatchMod.Load"
+}
