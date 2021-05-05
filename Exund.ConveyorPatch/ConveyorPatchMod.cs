@@ -52,11 +52,6 @@ namespace Exund.ConveyorPatch
                 var i = codes.FindLastIndex(ci => ci.opcode == OpCodes.Brfalse_S) + 1;
                 codes.Insert(i, new CodeInstruction(OpCodes.Call, typeof(ConveyorPatchMod).GetMethod("ConveyorPatch")));
                 codes.Insert(i, new CodeInstruction(OpCodes.Ldloc_S, 1));
-
-                foreach (var ci in codes)
-                {
-                    Console.WriteLine(ci.ToString());
-                }
                 return codes;
             }
         }
