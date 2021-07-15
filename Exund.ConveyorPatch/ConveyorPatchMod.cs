@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
-using Harmony;
+using HarmonyLib;
 
 namespace Exund.ConveyorPatch
 {
@@ -16,7 +16,7 @@ namespace Exund.ConveyorPatch
 
         public static void Load()
         {
-            var harmony = HarmonyInstance.Create("Exund.ConveyorPatch");
+            var harmony = new Harmony("Exund.ConveyorPatch");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
