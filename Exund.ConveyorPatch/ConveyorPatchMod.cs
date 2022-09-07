@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -8,16 +8,28 @@ using HarmonyLib;
 
 namespace Exund.ConveyorPatch
 {
-    public class ConveyorPatchMod
+    public class ConveyorPatchMod : ModBase
     {
-        static BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
-        static FieldInfo m_Output = typeof(ModuleItemConsume).GetField("m_Output", flags);
-        static FieldInfo m_Holder = typeof(ModuleItemConveyor).GetField("m_Holder", flags);
+        private static readonly FieldInfo m_Output = AccessTools.Field(typeof(ModuleItemConsume), "m_Output");
+        private static readonly FieldInfo m_Holder = AccessTools.Field(typeof(ModuleItemConveyor), "m_Holder");
+
+        internal const string HarmonyID = "Exund.ConveyorPatch";
+
+        internal static Harmony harmony = new Harmony(HarmonyID);
 
         public static void Load()
         {
-            var harmony = new Harmony("Exund.ConveyorPatch");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+        }
+
+        public override void Init()
+        {
+            Load();
+        }
+
+        public override void DeInit()
+        {
+            harmony.UnpatchAll(HarmonyID);
         }
 
         public static void ConveyorPatch(ModuleItemConveyor fromConveyor)
@@ -28,11 +40,9 @@ namespace Exund.ConveyorPatch
                 ModuleItemConsume consume = stack.myHolder?.GetComponent<ModuleItemConsume>();
                 if (consume)
                 {
-                    //Console.WriteLine(consume.block.name);
                     ModuleItemHolder.StackHandle stackHandle = (ModuleItemHolder.StackHandle)m_Output.GetValue(consume);
                     if (stackHandle?.stack == stack && !stack.IsEmpty && !stack.ReceivedThisHeartbeat)
                     {
-                        //Console.WriteLine(stack.basePos);
                         holder.SingleStack.TryTakeOnHeartbeat(stack.FirstItem);
                         break;
                     }
@@ -41,19 +51,19 @@ namespace Exund.ConveyorPatch
         }
     }
 
-    static class Patches
+    internal static class Patches
     {
-        [HarmonyPatch(typeof(ModuleItemConveyor), "OnCycle")]
+        [HarmonyPatch(typeof(global::ModuleItemConveyor), "OnCycle")]
         private static class OnCycle
         {
-            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+            private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
             {
                 var codes = instructions.ToList();
-                var i = codes.FindLastIndex(ci => ci.opcode == OpCodes.Brfalse_S) + 1;
+                var i = codes.FindIndex(ci => ci.opcode == OpCodes.Ldloc_S && (ci.operand as LocalBuilder).LocalType == typeof(TechHolders.OperationResult));
                 codes.Insert(i, new CodeInstruction(OpCodes.Call, typeof(ConveyorPatchMod).GetMethod("ConveyorPatch")));
                 codes.Insert(i, new CodeInstruction(OpCodes.Ldloc_S, 1));
                 return codes;
             }
-        }
+		}
     }
 }
